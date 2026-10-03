@@ -1,0 +1,282 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\title{Data Compression using Singular Value Decomposition (SVD)}
+\author{Mardhav Rayapati}
+\date{}
+
+\begin{document}
+
+\maketitle
+\newpage
+
+\section{Singular Value Decomposition}
+
+\subsection{Introduction}
+
+Singular Value Decomposition (SVD) is a matrix factorization technique
+that decomposes a matrix into three matrices. For a matrix
+$A \in \mathbb{R}^{m \times n}$, its singular value decomposition is
+
+\[
+    A = U \Sigma V^{T},
+\]
+
+where
+
+\[
+    U \in \mathbb{R}^{m \times m},
+    \qquad
+    \Sigma \in \mathbb{R}^{m \times n},
+    \qquad
+    V \in \mathbb{R}^{n \times n}.
+\]
+
+The matrices $U$ and $V$ are orthogonal matrices, satisfying
+
+\[
+    U^{T}U = I_m,
+    \qquad
+    V^{T}V = I_n,
+\]
+
+while $\Sigma$ is a diagonal matrix containing the singular values
+of $A$.
+
+The singular values are conventionally arranged in non-increasing
+order:
+
+\[
+    \sigma_1 \geq \sigma_2 \geq \cdots \geq
+    \sigma_r \geq 0,
+\]
+
+where
+
+\[
+    r = \operatorname{rank}(A).
+\]
+
+Equivalently, the decomposition can be written as
+
+\[
+    A =
+    \sum_{i=1}^{r}
+    \sigma_i u_i v_i^{T},
+\]
+
+where $u_i$ and $v_i$ are the corresponding left and right singular
+vectors.
+
+\subsection{Connection to Eigenvalue Decomposition}
+
+The singular values of $A$ are related to the eigenvalues of
+$A^{T}A$.
+
+Since
+
+\[
+    A = U\Sigma V^{T},
+\]
+
+we obtain
+
+\[
+    A^{T}A
+    =
+    V\Sigma^{T}U^{T}U\Sigma V^{T}.
+\]
+
+Using the orthogonality of $U$,
+
+\[
+    U^{T}U = I,
+\]
+
+giving
+
+\[
+    A^{T}A = V\Sigma^{T}\Sigma V^{T}.
+\]
+
+Therefore, $V$ contains the eigenvectors of $A^{T}A$, while the
+eigenvalues are the squared singular values:
+
+\[
+    \lambda_i = \sigma_i^2.
+\]
+
+Consequently,
+
+\[
+    \sigma_i = \sqrt{\lambda_i}.
+\]
+
+This relationship provides one way of computing the SVD and forms
+the basis for the eigenvalue-based approach explored in this project.
+
+\section{Step 1: Householder Reflector Matrix}
+
+In the eigenvalue-based computation of the SVD, the symmetric
+matrix
+
+\[
+    B = A^T A
+\]
+
+is first constructed.\\
+
+Geometrically, a Householder reflection matrix reflects a vector
+across a hyperplane perpendicular to a given vector.\\
+
+For a nonzero vector $u$, a Householder reflector is generally
+defined as
+
+\[
+    H = I - 2\frac{uu^T}{u^T u}.
+\]
+
+If $u$ is a unit vector, then $u^T u = 1$, and the expression
+simplifies to
+
+\[
+    H = I - 2uu^T.
+\]
+
+Every Householder reflector has the following properties:
+
+\begin{itemize}
+
+    \item Symmetric:
+          \[
+              H^T = H
+          \]
+
+    \item Orthogonal:
+          \[
+              H^T H = I
+          \]
+
+\end{itemize}
+
+\section{Step 2: Tridiagonalization}
+
+A symmetric matrix $B$ can be transformed into a symmetric
+tridiagonal matrix by applying a series of Householder
+transformations.\\
+
+Each transformation is an orthogonal similarity transformation
+of the form
+
+\[
+    B_{k+1} = H_k B_k H_k^T,
+\]
+
+where $H_k$ is a Householder reflector.\\
+
+After applying the required sequence of transformations, the
+matrix is reduced to a symmetric tridiagonal matrix of the form
+
+\[
+    T =
+    \begin{bmatrix}
+        b_{11} & b_{12} & 0      & 0      & 0      & \dots \\
+        b_{12} & b_{22} & b_{23} & 0      & 0      & \dots \\
+        0      & b_{23} & b_{33} & b_{34} & 0      & \dots \\
+        0      & 0      & b_{34} & b_{44} & b_{45} & \dots \\
+        \vdots & \vdots & \vdots & \vdots & \vdots &
+    \end{bmatrix}.
+\]
+
+Since each Householder transformation is orthogonal, the
+transformation preserves the eigenvalues of the matrix. Therefore,
+
+\[
+    \lambda_i(T) = \lambda_i(B).
+\]
+
+\section{Step 3: QR Iteration}
+
+The tridiagonal matrix $T$ obtained from the previous step is
+used to compute its eigenvalues. This is done using the QR
+iteration algorithm.
+
+Let
+
+\[
+    T_0 = T.
+\]
+
+At each iteration, the current matrix $T_k$ is factorized using
+the QR decomposition:
+
+\[
+    T_k = Q_k R_k,
+\]
+
+where $Q_k$ is orthogonal and $R_k$ is upper triangular.\\
+
+The next iterate is then obtained by reversing the order of the
+factors:
+
+\[
+    T_{k+1} = R_k Q_k.
+\]
+
+Since
+
+\[
+    T_k = Q_k R_k,
+\]
+
+we have
+
+\[
+    T_{k+1}
+    = R_k Q_k
+    = Q_k^T T_k Q_k.
+\]
+
+Therefore, $T_{k+1}$ is orthogonally similar to $T_k$ and has
+the same eigenvalues.\\
+
+Repeating this process,
+
+\[
+    T_0 \rightarrow T_1 \rightarrow T_2
+    \rightarrow \cdots \rightarrow T_k,
+\]
+
+causes the off-diagonal elements to converge towards zero. Thus,
+
+\[
+    T_k \rightarrow D,
+\]
+
+where $D$ is a diagonal matrix:
+
+\[
+    D =
+    \begin{bmatrix}
+        \lambda_1 & 0         & \cdots & 0         \\
+        0         & \lambda_2 & \cdots & 0         \\
+        \vdots    & \vdots    & \ddots & \vdots    \\
+        0         & 0         & \cdots & \lambda_n
+    \end{bmatrix}.
+\]
+
+The diagonal entries of $D$ are therefore the eigenvalues of
+the original matrix $B = A^T A$.\\
+
+The singular values of $A$ can then be obtained from these
+eigenvalues:
+
+\[
+    \sigma_i = \sqrt{\lambda_i}.
+\]
+
+\section{Step 3: Construct the Eigenvectors of B using the Eigenvalues}
+
+\end{document}

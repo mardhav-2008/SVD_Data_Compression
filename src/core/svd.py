@@ -161,9 +161,3 @@ def Calculate_SVD(
     Sigma = np.diag(singular_values)
 
     return U, Sigma, V
-
-
-if __name__ == "__main__":
-    A = np.array([[1, 2, 3], [2, 3, 4], [3, 4, 5]])
-    u, sigma, v = Calculate_SVD(A)
-    print(u, sigma, v, np.allclose(u @ sigma @ v.T, A))
